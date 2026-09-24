@@ -143,6 +143,12 @@ svg#map.dragging{cursor:grabbing}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:8px 14px;border-radius:8px;font-size:13px;z-index:10}
 .field.site{flex:1 1 220px}
 .term .look{border:0;background:transparent;color:var(--accent);padding:0;font-size:12px;text-decoration:underline}
+.xgroup{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.xgroup .srctype{display:flex;gap:6px;align-items:center;color:var(--accent)}
+.xlink{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);background:var(--surface)}
+.xlink:hover{border-color:var(--accent);background:var(--ground)}
+.xlink > span:first-child{display:flex;flex-direction:column;gap:1px}
+a.chip{color:var(--ink);text-decoration:none}
 </style>
 </head>
 <body>
@@ -156,7 +162,7 @@ svg#map.dragging{cursor:grabbing}
         <input id="q" name="q" autocomplete="off" placeholder="Keyword or application, e.g. SAP Ariba Sourcing" aria-label="Keyword or application name">
       </label>
       <select id="mode" aria-label="Where to gather from">
-        <option value="sap" selected>SAP Help Portal (free)</option>
+        <option value="sap" selected>Knowledge repository</option>
         <option value="general">General (Wikipedia)</option>
         <option value="document">From a document URL</option>
       </select>
@@ -188,11 +194,16 @@ svg#map.dragging{cursor:grabbing}
       <div class="tabs" role="tablist">
         <button role="tab" id="tab-g" aria-selected="true" aria-controls="pane-g">Glossary <span class="n" id="gn"></span></button>
         <button role="tab" id="tab-s" aria-selected="false" aria-controls="pane-s">Sources <span class="n" id="sn"></span></button>
+        <button role="tab" id="tab-x" aria-selected="false" aria-controls="pane-x">Explore</button>
       </div>
       <div class="pane" id="pane-g" role="tabpanel">
         <div class="filter"><input id="gq" placeholder="Filter terms" aria-label="Filter glossary"><button class="btn sm" id="gclear" type="button" hidden>Clear highlight</button></div>
         <div class="cats" id="cats"></div>
         <div id="glist"></div>
+      </div>
+      <div class="pane" id="pane-x" role="tabpanel" hidden>
+        <div class="note">Ready-made searches on official SAP sites for <b id="xq"></b>. Each link opens the live results in a new tab.</div>
+        <div id="xlist"></div>
       </div>
       <div class="pane" id="pane-s" role="tabpanel" hidden>
         <div class="note">Every node and term links back to the page it came from. <b>Official</b> means the link is on the official-domain list set on the server.</div>
@@ -448,6 +459,7 @@ function showInspector(n){
     ${n.desc?`<p>${esc(n.desc)}</p>`:""}
     ${src}
     ${termChips}
+    ${n.depth>0 ? `<div class="row small"><span class="muted">Explore:</span>${[["Community",`https://community.sap.com/t5/forums/searchpage/tab/message?q=${encodeURIComponent(data.topic+" "+n.label)}`],["Videos & courses",`https://learning.sap.com/search?query=${encodeURIComponent(data.topic+" "+n.label).replace(/%20/g,"+")}`],["YouTube",`https://www.youtube.com/@SAP/search?query=${encodeURIComponent(data.topic+" "+n.label)}`]].map(([t,u])=>`<a class="chip" href="${esc(u)}" target="_blank" rel="noopener">${t} ↗</a>`).join("")}</div>` : ""}
     <div class="row">
       ${n.depth>0 && n.depth<5 && n.source && n.source.url ? `<button class="btn sm primary" id="deeper" type="button">Map this source page</button>`:""}
       ${hasKids && n.depth>0 ? `<button class="btn sm" id="coll" type="button">${n.collapsed?"Show":"Hide"} ${n.children.length} sub-topics</button>`:""}
@@ -512,10 +524,42 @@ function renderSources(){
   }).join("")).join("");
 }
 function tab(which){
-  $("tab-g").setAttribute("aria-selected", which==="g"); $("tab-s").setAttribute("aria-selected", which==="s");
-  $("pane-g").hidden = which!=="g"; $("pane-s").hidden = which!=="s";
+  for (const k of ["g","s","x"]) { $("tab-"+k).setAttribute("aria-selected", which===k); $("pane-"+k).hidden = which!==k; }
 }
-$("tab-g").onclick = () => tab("g"); $("tab-s").onclick = () => tab("s");
+$("tab-g").onclick = () => tab("g"); $("tab-s").onclick = () => tab("s"); $("tab-x").onclick = () => tab("x");
+
+/* ---------- Explore: keyword-filled links to official SAP sites (opened by the viewer, nothing scraped) ---------- */
+function exploreLinks(q){
+  const e = encodeURIComponent(q), p = encodeURIComponent(q).replace(/%20/g,"+");
+  return [
+    {group:"Knowledge repository", icon:"doc", items:[
+      {t:"SAP Help Portal search", d:"Official product documentation, guides and release notes", u:`https://help.sap.com/docs/search?q=${e}`},
+      {t:"What's New notes", d:"Release highlights that mention this topic", u:`https://help.sap.com/docs/search?q=${encodeURIComponent(q+" what's new")}`}]},
+    {group:"Community forums", icon:"chat", items:[
+      {t:"SAP Community: questions & blogs", d:"Practitioner Q&A, answers and expert blog posts", u:`https://community.sap.com/t5/forums/searchpage/tab/message?q=${e}`}]},
+    {group:"Official videos", icon:"play", items:[
+      {t:"SAP Learning: videos & courses", d:"Free SAP videos, learning journeys and courses", u:`https://learning.sap.com/search?query=${p}`},
+      {t:"SAP on YouTube", d:"Official SAP channel", u:`https://www.youtube.com/@SAP/search?query=${e}`},
+      {t:"SAP Help and Learning on YouTube", d:"How-to and product walkthrough videos", u:`https://www.youtube.com/@SAPHelpandLearning/search?query=${e}`},
+      {t:"SAP Community on YouTube", d:"Community sessions and expert talks", u:`https://www.youtube.com/SAPCommunities/search?query=${e}`}]},
+    {group:"APIs & integration", icon:"api", items:[
+      {t:"SAP Business Accelerator Hub", d:"APIs, integration packages and events", u:`https://api.sap.com/search?searchterm=${e}`}]}
+  ];
+}
+const ICONS = {
+  doc:'<path d="M4 1.5h5l3 3v10H4z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 8h4M6 10.5h4" stroke="currentColor" stroke-width="1.4"/>',
+  chat:'<path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  play:'<rect x="1.5" y="3" width="13" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M7 5.8v4.4L10.5 8z" fill="currentColor"/>',
+  api:'<path d="M5 4L1.5 8 5 12M11 4l3.5 4L11 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>'
+};
+function linkRows(groups){
+  return groups.map(g => `<div class="xgroup"><div class="srctype"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">${ICONS[g.icon]}</svg>${esc(g.group)}</div>` +
+    g.items.map(i => `<a class="xlink" href="${esc(i.u)}" target="_blank" rel="noopener"><span><b>${esc(i.t)}</b><span class="small muted">${esc(i.d)}</span></span><span aria-hidden="true">↗</span></a>`).join("") + `</div>`).join("");
+}
+function renderExplore(){
+  const q = data.topic; $("xq").textContent = q;
+  $("xlist").innerHTML = linkRows(exploreLinks(q));
+}
 
 /* ---------- load a map ---------- */
 function load(d, label){
@@ -523,7 +567,7 @@ function load(d, label){
   $("insp").hidden = true; $("gclear").hidden = true;
   $("eyebrow").textContent = label || "Mind map";
   $("summary").textContent = data.summary;
-  render(); renderGlossary(); renderSources();
+  render(); renderGlossary(); renderSources(); renderExplore();
   requestAnimationFrame(fit);
 }
 
@@ -555,7 +599,7 @@ async function api(path, opts={}){
 function metaLine(m){
   if(!m) return "";
   const bits = [];
-  if(m.mode==="sap") bits.push(`${m.results} results from SAP Help Portal${/\+/.test(m.provider)?" and other SAP sites":""}`, `${m.pagesRead} pages read`);
+  if(m.mode==="sap") bits.push(`${m.results} results from the Knowledge repository${/\+/.test(m.provider)?" and other SAP sites":""}`, `${m.pagesRead} pages read`);
   if(m.mode==="general") bits.push("Built from Wikipedia");
   if(m.mode==="document") bits.push("Built from the document's own structure");
   bits.push(m.cached ? "from cache" : `${(m.tookMs/1000).toFixed(1)} s`);
@@ -572,7 +616,7 @@ async function generate(){
       busy(true, "Reading the document and its outline…");
       d = await api("/api/document", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({url:q})});
     } else {
-      busy(true, mode==="sap" ? `Searching SAP Help Portal for "${q}" and reading the top pages… (10–30 seconds)` : `Reading the Wikipedia article for "${q}"…`);
+      busy(true, mode==="sap" ? `Searching the Knowledge repository for "${q}" and reading the top pages… (10–30 seconds)` : `Reading the Wikipedia article for "${q}"…`);
       const site = $("site").value.trim();
       d = await api(`/api/map?mode=${mode}&q=${encodeURIComponent(q)}${site&&mode==="general"?`&site=${encodeURIComponent(site)}`:""}`);
     }
