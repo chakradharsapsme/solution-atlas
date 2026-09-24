@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solution Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F1F4F3; --surface:#FFFFFF; --surface-2:#E8EEEC; --ink:#15212A; --muted:#566770; --line:#D3DCDA;
+  --accent:#0A6C80; --accent-ink:#FFFFFF; --warn:#9A5B00; --warn-bg:#FBEFD9; --ok:#1F6B3A; --ok-bg:#E1F2E6;
+  --b0:#0A6C80; --b1:#B4532A; --b2:#6A4FB0; --b3:#2F7D3A; --b4:#9C7A0E; --b5:#A23B6B; --b6:#34608F;
+  --grid:rgba(21,33,42,.06);
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0E1418; --surface:#161F25; --surface-2:#1D2830; --ink:#E3EBED; --muted:#93A4AB; --line:#2A3740;
+    --accent:#4FB3C9; --accent-ink:#0B1216; --warn:#F0B75C; --warn-bg:#3A2C12; --ok:#7FD39A; --ok-bg:#16301F;
+    --b0:#4FB3C9; --b1:#E58A5F; --b2:#A895EC; --b3:#6CC482; --b4:#DDB84A; --b5:#E07BA8; --b6:#7FA8DA;
+    --grid:rgba(227,235,237,.05);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1418; --surface:#161F25; --surface-2:#1D2830; --ink:#E3EBED; --muted:#93A4AB; --line:#2A3740;
+  --accent:#4FB3C9; --accent-ink:#0B1216; --warn:#F0B75C; --warn-bg:#3A2C12; --ok:#7FD39A; --ok-bg:#16301F;
+  --b0:#4FB3C9; --b1:#E58A5F; --b2:#A895EC; --b3:#6CC482; --b4:#DDB84A; --b5:#E07BA8; --b6:#7FA8DA;
+  --grid:rgba(227,235,237,.05);
+}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:flex;flex-direction:column;min-height:100%;padding-inline:16px;padding-block:14px 16px;gap:12px;max-width:1500px;margin:0 auto}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.01em;margin:0}
+.brand span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+form.ask{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1 1 520px}
+.field{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 12px;height:42px}
+.field input{border:0;background:transparent;outline:none;flex:1;min-width:0;height:100%;font-size:15px}
+.field:focus-within{border-color:var(--accent)}
+.field svg{flex:none;color:var(--muted)}
+select#mode{height:42px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 10px}
+.btn{height:42px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.sm{height:32px;padding:0 11px;font-size:13px;border-radius:8px}
+.recent{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px}
+.chip:hover{border-color:var(--accent)}
+.status{font-size:13px;color:var(--muted);min-height:20px;display:flex;gap:8px;align-items:center}
+.status.err{color:var(--warn)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+
+/* main */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;flex:1;min-height:560px}
+@media (max-width:960px){.main{grid-template-columns:1fr}}
+.stage{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:520px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+@media (max-width:960px){.stage{height:62vh;min-height:420px}}
+.stage-head{position:absolute;left:14px;top:12px;right:14px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;flex-wrap:wrap}
+.stage-head > *{pointer-events:auto}
+.topic-meta{max-width:560px}
+.topic-meta .eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.topic-meta p{margin:2px 0 0;font-size:13px;color:var(--muted);text-wrap:pretty}
+.tools{display:flex;gap:6px;align-items:flex-start}
+.tools .btn{background:var(--surface)}
+svg#map{width:100%;height:100%;display:block;touch-action:none;cursor:grab;position:absolute;inset:0}
+svg#map.dragging{cursor:grabbing}
+.edge{fill:none;stroke-width:2;stroke-linecap:round;opacity:.75}
+.node rect{stroke-width:1.5}
+.node text{font-family:var(--body);font-size:13px;fill:var(--ink);dominant-baseline:central;pointer-events:none}
+.node{cursor:pointer}
+.node.root text{font-family:var(--display);font-weight:700;font-size:17px;fill:var(--accent-ink)}
+.node.d1 text{font-weight:600}
+.node.sel rect{stroke-width:3}
+.node .badge{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.map.dim .node:not(.hit):not(.root){opacity:.22}
+.map.dim .edge{opacity:.15}
+.node.hit rect{stroke-width:3}
+
+/* inspector */
+.inspector{position:absolute;left:14px;bottom:14px;width:min(440px,calc(100% - 28px));background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(10,20,25,.14);padding:14px 16px;display:flex;flex-direction:column;gap:8px;max-height:60%;overflow:auto}
+.crumbs{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em}
+.inspector h3{margin:0;font-family:var(--display);font-size:19px;font-weight:700;text-wrap:balance;display:flex;gap:8px;align-items:center}
+.swatch{width:10px;height:10px;border-radius:3px;flex:none}
+.inspector p{margin:0}
+.src{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.src a{color:var(--accent);font-family:var(--mono);font-size:12px;word-break:break-all}
+.guard{font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.guard.ok{background:var(--ok-bg);color:var(--ok)}
+.guard.no{background:var(--warn-bg);color:var(--warn)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.close{margin-left:auto;border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:2px 6px}
+
+/* side panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0;overflow:hidden;max-height:calc(100vh - 150px)}
+@media (max-width:960px){.panel{max-height:none}}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;padding:12px 8px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;display:flex;gap:6px;justify-content:center;align-items:baseline}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .n{font-family:var(--mono);font-size:11px;font-weight:400}
+.pane{padding:12px 14px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px;flex:1}
+.filter{display:flex;gap:8px}
+.filter input{flex:1;min-width:0;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--ground);padding:0 10px}
+.cats{display:flex;flex-wrap:wrap;gap:5px}
+.cats .chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.letter{font-family:var(--display);font-weight:700;font-size:15px;color:var(--accent);margin-top:6px;border-bottom:1px solid var(--line);padding-bottom:2px}
+.term{border:1px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.term:hover{background:var(--ground)}
+.term.on{border-color:var(--accent);background:var(--ground)}
+.term .t{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.term b{font-weight:600}
+.term .abbr{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.term .cat{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.term .d{font-size:13px;color:var(--muted)}
+.term .links{font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.term .links a{color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.srcitem{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid var(--line)}
+.srcitem:last-child{border-bottom:0}
+.srcitem a{color:var(--ink);font-weight:600;text-decoration:none}
+.srcitem a:hover{color:var(--accent);text-decoration:underline}
+.srcitem .dom{font-family:var(--mono);font-size:11.5px;color:var(--muted);word-break:break-all}
+.srctype{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:4px}
+.note{font-size:12px;color:var(--muted);background:var(--ground);border-radius:8px;padding:8px 10px}
+.empty{color:var(--muted);font-size:13px;padding:12px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:8px 14px;border-radius:8px;font-size:13px;z-index:10}
+.field.site{flex:1 1 220px}
+.term .look{border:0;background:transparent;color:var(--accent);padding:0;font-size:12px;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>Solution Atlas</h1><span>Mind maps from official sources</span></div>
+    <form class="ask" id="ask">
+      <label class="field" for="q">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="q" name="q" autocomplete="off" placeholder="Keyword or application, e.g. SAP Ariba Sourcing" aria-label="Keyword or application name">
+      </label>
+      <select id="mode" aria-label="Where to gather from">
+        <option value="sap" selected>SAP Help Portal (free)</option>
+        <option value="general">General (Wikipedia)</option>
+        <option value="document">From a document URL</option>
+      </select>
+      <label class="field site" id="sitewrap" for="site" hidden><input id="site" placeholder="Official site (optional), e.g. salesforce.com" aria-label="Official site domain"></label>
+      <button class="btn primary" id="go" type="submit">Generate map</button>
+      <label class="btn" id="upwrap" for="upfile" hidden>Upload PDF<input id="upfile" type="file" accept=".pdf,application/pdf,.html,.htm" hidden></label>
+      <button class="btn" id="stop" type="button" hidden>Stop</button>
+    </form>
+  </header>
+  <div class="recent" id="recent"></div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+
+  <div class="main">
+    <section class="stage" aria-label="Mind map">
+      <svg id="map" role="img" aria-label="Mind map"><g id="vp" class="map"></g></svg>
+      <div class="stage-head">
+        <div class="topic-meta"><div class="eyebrow" id="eyebrow">Example map</div><p id="summary"></p></div>
+        <div class="tools">
+          <button class="btn sm" id="zin" type="button" aria-label="Zoom in">+</button>
+          <button class="btn sm" id="zout" type="button" aria-label="Zoom out">−</button>
+          <button class="btn sm" id="fit" type="button">Fit</button>
+          <button class="btn sm" id="exp" type="button">Export</button>
+        </div>
+      </div>
+      <div class="inspector" id="insp" hidden></div>
+    </section>
+
+    <aside class="panel" aria-label="Reference">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-g" aria-selected="true" aria-controls="pane-g">Glossary <span class="n" id="gn"></span></button>
+        <button role="tab" id="tab-s" aria-selected="false" aria-controls="pane-s">Sources <span class="n" id="sn"></span></button>
+      </div>
+      <div class="pane" id="pane-g" role="tabpanel">
+        <div class="filter"><input id="gq" placeholder="Filter terms" aria-label="Filter glossary"><button class="btn sm" id="gclear" type="button" hidden>Clear highlight</button></div>
+        <div class="cats" id="cats"></div>
+        <div id="glist"></div>
+      </div>
+      <div class="pane" id="pane-s" role="tabpanel" hidden>
+        <div class="note">Every node and term links back to the page it came from. <b>Official</b> means the link is on the official-domain list set on the server.</div>
+        <div id="slist"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+let OFFICIAL = ["help.sap.com","sap.com","community.sap.com","learning.sap.com","api.sap.com","support.sap.com","me.sap.com","developers.sap.com","discovery-center.cloud.sap","roadmaps.sap.com","influence.sap.com","blogs.sap.com","news.sap.com","training.sap.com","launchpad.support.sap.com"];
+const SRC_TYPES = {official:"Official documentation",product:"Product pages",community:"Community & forums",learning:"Learning",api:"APIs & integration",roadmap:"Roadmap & release",reference:"Reference"};
+
+const EXAMPLE = {
+  topic:"SAP Ariba Guided Buying",
+  summary:"The simplified, policy-driven buying front end on top of SAP Ariba Buying. Casual requesters shop catalogs, forms and quotes while procurement steers them to compliant channels.",
+  branches:[
+    {label:"Buying experience",desc:"What a requester sees: a consumer-style landing page, search across catalogs and forms, a cart and a guided checkout.",source:{title:"SAP Ariba Guided Buying (product page)",url:"https://www.sap.com/products/spend-management/procure-to-pay/features/guided-buying.html"},
+      children:[
+        {label:"Landing page & tiles",desc:"Configurable home page with tiles that route users to catalogs, forms or external sites for common purchases."},
+        {label:"Catalog search",desc:"Single search across hosted catalogs and punch-out catalogs, with preferred items promoted."},
+        {label:"Forms",desc:"Non-catalog requests captured through configurable forms, so procurement gets structured data instead of free text."},
+        {label:"Cart & checkout",desc:"Requisition is built from the cart; accounting, delivery and approvals are applied at checkout."}]},
+    {label:"Policies & controls",desc:"Buying policies warn, block or require justification based on amount, supplier, commodity or other conditions.",source:{title:"Guided Buying Administration Guide (PDF)",url:"https://help.sap.com/doc/22983cba504a482eb7af2b59419e0eee/2505/en-US/GuidedBuyingAdministrationGuide.pdf"},
+      children:[
+        {label:"Buying policies",desc:"Rule sets that trigger messages, attachments or justifications when conditions are met."},
+        {label:"Preferred suppliers",desc:"Suppliers flagged as preferred for a commodity and region are surfaced first."},
+        {label:"Quote thresholds",desc:"Above a set amount, a request is routed to a spot quote instead of a direct order."},
+        {label:"Policy messages",desc:"Inline guidance shown on items, forms or checkout to explain the rule to the requester."}]},
+    {label:"Content channels",desc:"Where buyable content comes from: catalogs, punch-outs, contracts and quote events.",
+      children:[
+        {label:"Hosted catalogs (CIF)",desc:"Supplier catalogs loaded into SAP Ariba, often as CIF or CSV files."},
+        {label:"Punch-out catalogs",desc:"Requester shops on the supplier's site and returns the cart; level 1 and level 2 punch-out are supported."},
+        {label:"Spot quote",desc:"Lightweight quote event launched from a request when no catalog or contract exists."},
+        {label:"Contracts",desc:"Items and pricing linked to contracts so spend is captured against agreements."}]},
+    {label:"Approvals & workflow",desc:"Guided Buying relies on SAP Ariba Buying approval rules; approvers act from email or the approvals page.",source:{title:"SAP Ariba Buying on SAP Help Portal",url:"https://help.sap.com/docs/SAP_Ariba_Buying"},
+      children:[
+        {label:"Approval rules",desc:"Defined in SAP Ariba Buying and applied to requisitions created in Guided Buying."},
+        {label:"Requisition to PO",desc:"Approved requisitions become purchase orders sent to suppliers."},
+        {label:"Delegation",desc:"Approvers can delegate approval authority for a period."}]},
+    {label:"Administration",desc:"Guided Buying has its own admin area for landing pages, tiles, forms, policies and parameters.",source:{title:"Navigating between Guided Buying and SAP Ariba procurement solutions",url:"https://help.sap.com/docs/buying-invoicing/guided-buying-administration/navigating-between-guided-buying-and-sap-ariba-procurement-solutions"},
+      children:[
+        {label:"Parameters",desc:"Site-level settings (PARAM_ entries) that switch features on and set defaults."},
+        {label:"Form designer",desc:"Build and publish custom forms with fields, validations and policies."},
+        {label:"Translations",desc:"Localise tiles, forms and policy messages for each user language."}]},
+    {label:"Integration",desc:"Guided Buying can front SAP Ariba Buying on its own or sit on top of S/4HANA through central procurement scenarios.",source:{title:"Guided Buying Capability with SAP Ariba Buying (2NV)",url:"https://help.sap.com/docs/sisgw/sap-ariba-cloud-integration-gateway-overview-guide/guided-buying-capability-with-sap-ariba-buying-2nv-9662eaf1afce4813ab175669a55648ef"},
+      children:[
+        {label:"S/4HANA scope item 2NV",desc:"Integration scenario where Guided Buying requisitions are processed with SAP S/4HANA."},
+        {label:"Cloud Integration Gateway",desc:"SAP's integration layer connecting SAP Ariba with ERP systems."},
+        {label:"Ariba Network",desc:"Where purchase orders reach suppliers and order confirmations and invoices come back."}]}
+  ],
+  glossary:[
+    {term:"Guided Buying",definition:"Simplified buying interface for occasional requesters, layered on SAP Ariba Buying.",category:"Product"},
+    {term:"Tile",definition:"A clickable card on the landing page that routes users to a catalog, form, site or search.",category:"UI"},
+    {term:"Landing page",definition:"The configurable home page of Guided Buying.",category:"UI"},
+    {term:"Buying policy",definition:"A rule that shows messages, requires justification or blocks a purchase when its conditions match.",category:"Control"},
+    {term:"Preferred supplier",definition:"A supplier promoted for a commodity and region to steer spend.",category:"Control"},
+    {term:"Spot quote",definition:"A quick competitive quote event launched from a buying request.",category:"Process"},
+    {term:"Punch-out",definition:"Shopping on a supplier's website from inside the procurement system and returning the cart.",category:"Content"},
+    {term:"Catalog Interchange Format",abbr:"CIF",definition:"A flat-file format used to load hosted supplier catalogs.",category:"Content"},
+    {term:"Non-catalog item",definition:"An item requested without catalog content, usually via a form.",category:"Content"},
+    {term:"Requisition",definition:"An internal request to buy, routed for approval before becoming a purchase order.",category:"Process"},
+    {term:"Purchase order",abbr:"PO",definition:"The order sent to a supplier once a requisition is approved.",category:"Process"},
+    {term:"Approval rules",definition:"The rules in SAP Ariba Buying that decide who approves what.",category:"Process"},
+    {term:"Parameters",abbr:"PARAM_",definition:"Site settings that enable features and set defaults in Guided Buying.",category:"Admin"},
+    {term:"Commodity code",definition:"Classification of goods and services (often UNSPSC-based) used in policies, approvals and reporting.",category:"Master data"},
+    {term:"Cloud Integration Gateway",abbr:"CIG",definition:"SAP's integration layer between SAP Ariba solutions and ERP systems.",category:"Integration"},
+    {term:"Ariba Network",definition:"SAP's supplier network for exchanging orders, confirmations and invoices.",category:"Integration"},
+    {term:"Scope item 2NV",abbr:"2NV",definition:"SAP Best Practices scope item for Guided Buying with SAP Ariba Buying and S/4HANA.",category:"Integration"},
+    {term:"Delegation",definition:"Temporary handover of approval authority to another user.",category:"Process"}
+  ],
+  sources:[
+    {title:"SAP Ariba Buying — SAP Help Portal",url:"https://help.sap.com/docs/SAP_Ariba_Buying",type:"official",why:"Main documentation hub for the buying back end."},
+    {title:"Guided Buying Administration Guide (2505)",url:"https://help.sap.com/doc/22983cba504a482eb7af2b59419e0eee/2505/en-US/GuidedBuyingAdministrationGuide.pdf",type:"official",why:"Policies, forms, tiles and parameters in one guide."},
+    {title:"Navigating between Guided Buying and SAP Ariba procurement solutions",url:"https://help.sap.com/docs/buying-invoicing/guided-buying-administration/navigating-between-guided-buying-and-sap-ariba-procurement-solutions",type:"official",why:"How the two user interfaces relate."},
+    {title:"Guided Buying Capability with SAP Ariba Buying (2NV)",url:"https://help.sap.com/docs/sisgw/sap-ariba-cloud-integration-gateway-overview-guide/guided-buying-capability-with-sap-ariba-buying-2nv-9662eaf1afce4813ab175669a55648ef",type:"api",why:"Integration scenario with S/4HANA through CIG."},
+    {title:"Guided Buying for Central Procurement (S/4HANA Cloud)",url:"https://help.sap.com/docs/SAP_S4HANA_CLOUD/0e602d466b99490187fcbb30d1dc897c/5395cc4252e146d7809cbf1ee13cc695.html",type:"api",why:"Central procurement variant of the integration."},
+    {title:"SAP Ariba Guided Buying — product page",url:"https://www.sap.com/products/spend-management/procure-to-pay/features/guided-buying.html",type:"product",why:"Positioning and feature overview."},
+    {title:"SAP Community",url:"https://community.sap.com",type:"community",why:"Questions, blogs and answers from practitioners."},
+    {title:"SAP Learning",url:"https://learning.sap.com",type:"learning",why:"Free learning journeys for SAP Ariba procurement."}
+  ]
+};
+
+/* ---------- state ---------- */
+let data = null, selId = null, hitIds = new Set(), activeTerm = null, catFilter = null;
+let view = {x:0,y:0,k:1};
+let ctl = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SVGNS = "http://www.w3.org/2000/svg";
+
+function hostOf(u){ try{ const x=new URL(u); return x.protocol==="https:"||x.protocol==="http:" ? x.hostname.toLowerCase() : null; }catch{ return null; } }
+function isOfficial(u){ const h=hostOf(u); return !!h && OFFICIAL.some(d => h===d || h.endsWith("."+d)); }
+function guardChip(u){ return isOfficial(u) ? '<span class="guard ok">Official</span>' : '<span class="guard no">Unverified</span>'; }
+function safeHref(u){ return hostOf(u) ? u : null; }
+
+/* ---------- normalise ---------- */
+let uid = 0;
+function norm(d){
+  uid = 0;
+  const walk = (n, depth, branch) => {
+    const out = {id:"n"+(uid++), label:String(n.label||"Untitled").trim(), desc:String(n.desc||n.description||"").trim(), depth, branch,
+      source: n.source && n.source.url ? {title:String(n.source.title||n.source.url), url:String(n.source.url)} : null,
+      children:[], collapsed:false};
+    (Array.isArray(n.children)?n.children:[]).slice(0,10).forEach(c => out.children.push(walk(c, depth+1, branch)));
+    return out;
+  };
+  const root = {id:"root", label:String(d.topic||"Topic"), desc:String(d.summary||""), depth:0, branch:-1, children:[], source:null};
+  (Array.isArray(d.branches)?d.branches:[]).slice(0,9).forEach((b,i) => root.children.push(walk(b,1,i%7)));
+  const glossary = (Array.isArray(d.glossary)?d.glossary:[]).filter(g=>g&&g.term).map(g => ({term:String(g.term),abbr:g.abbr?String(g.abbr):"",definition:String(g.definition||""),category:String(g.category||"General"),url:g.url?String(g.url):""}));
+  const sources = (Array.isArray(d.sources)?d.sources:[]).filter(s=>s&&s.url).map(s => ({title:String(s.title||s.url),url:String(s.url),type:SRC_TYPES[s.type]?s.type:"official",why:String(s.why||"")}));
+  return {topic:root.label, summary:root.desc, root, glossary, sources, raw:d};
+}
+function allNodes(n=data.root, acc=[]){ acc.push(n); n.children.forEach(c=>allNodes(c,acc)); return acc; }
+function findNode(id){ return allNodes().find(n=>n.id===id); }
+function pathTo(id){ const p=[]; const f=(n)=>{ p.push(n); if(n.id===id) return true; for(const c of n.children) if(f(c)) return true; p.pop(); return false; }; f(data.root); return p; }
+
+/* ---------- layout ---------- */
+let mG = null;
+function textW(str, depth){
+  const svg = $("map");
+  if(!mG || !mG.isConnected){ mG = el("g",{"aria-hidden":"true",opacity:"0"}, svg); }
+  mG.setAttribute("class", `node d${Math.min(depth,3)}${depth===0?" root":""}`);
+  let t = mG.firstChild; if(!t){ t = el("text",{x:"-9999",y:"-9999"}, mG); }
+  t.textContent = str;
+  try{ const w = t.getComputedTextLength(); if(w>0) return w; }catch{}
+  return str.length * (depth===0?9.5:7.2);
+}
+function clip(s, n){ return s.length>n ? s.slice(0,n-1)+"…" : s; }
+const SLOT = {1:46,2:34,3:30,4:28};
+const GAPX = 56;
+
+function measure(n){
+  n.text = clip(n.label, n.depth===0?40:(n.depth===1?30:34));
+  n.w = Math.ceil(textW(n.text, n.depth)) + (n.depth===0?40:24) + (n.children.length && n.collapsed ? 22 : 0);
+  n.hh = n.depth===0?44:(n.depth===1?34:28);
+  const kids = n.collapsed ? [] : n.children;
+  kids.forEach(measure);
+  const slot = SLOT[Math.min(n.depth,4)] || 28;
+  const sum = kids.reduce((a,c)=>a+c.sh,0) + Math.max(0,kids.length-1)*6;
+  n.sh = Math.max(slot, sum);
+}
+function place(n, top, side, xInner){
+  n.side = side; n.y = top + n.sh/2;
+  n.x = side>0 ? xInner : xInner - n.w;   // left edge
+  const kids = n.collapsed ? [] : n.children;
+  const sum = kids.reduce((a,c)=>a+c.sh,0) + Math.max(0,kids.length-1)*6;
+  let t = top + (n.sh - sum)/2;
+  const nextInner = side>0 ? n.x + n.w + GAPX : n.x - GAPX;
+  kids.forEach(c => { place(c, t, side, nextInner); t += c.sh + 6; });
+}
+function layout(){
+  const r = data.root; r.collapsed=false; measure(r);
+  r.x = -r.w/2; r.y = 0; r.side = 0;
+  const bs = r.children;
+  // balance sides by height
+  const right=[], left=[]; let hr=0, hl=0;
+  bs.forEach(b => { if(hr<=hl){ right.push(b); hr+=b.sh+14; } else { left.push(b); hl+=b.sh+14; } });
+  const stack = (arr, side) => {
+    const total = arr.reduce((a,b)=>a+b.sh,0) + Math.max(0,arr.length-1)*14;
+    let t = -total/2;
+    arr.forEach(b => { place(b, t, side, side>0 ? r.w/2 + 70 : -r.w/2 - 70); t += b.sh + 14; });
+  };
+  stack(right, 1); stack(left, -1);
+}
+
+/* ---------- render ---------- */
+function colorOf(n){ return n.depth===0 ? "var(--accent)" : `var(--b${n.branch})`; }
+function el(tag, attrs, parent){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+
+function render(){
+  const vp = $("vp"); vp.textContent = "";
+  if(!data) return;
+  layout();
+  const edges = el("g",{},vp), nodes = el("g",{},vp);
+  const draw = (n) => {
+    const kids = n.collapsed ? [] : n.children;
+    kids.forEach(c => {
+      const x1 = n.depth===0 ? (c.side>0 ? n.x+n.w : n.x) : (c.side>0 ? n.x+n.w : n.x);
+      const x2 = c.side>0 ? c.x : c.x + c.w;
+      const mx = (x1+x2)/2;
+      el("path",{class:"edge", d:`M${x1},${n.y} C${mx},${n.y} ${mx},${c.y} ${x2},${c.y}`, stroke:colorOf(c)}, edges);
+      draw(c);
+    });
+    const g = el("g",{class:`node d${Math.min(n.depth,3)}${n.depth===0?" root":""}${n.id===selId?" sel":""}${hitIds.has(n.id)?" hit":""}`, "data-id":n.id, tabindex:"0", role:"button", "aria-label":n.label}, nodes);
+    const col = colorOf(n);
+    const fill = n.depth===0 ? "var(--accent)" : (n.depth===1 ? `color-mix(in srgb, ${col} 16%, var(--surface))` : "var(--surface)");
+    el("rect",{x:n.x, y:n.y-n.hh/2, width:n.w, height:n.hh, rx:n.depth===0?22:(n.depth===1?9:7), fill, stroke:col}, g);
+    const t = el("text",{x:n.x + (n.depth===0?20:12), y:n.y}, g); t.textContent = n.text;
+    if(n.children.length && n.collapsed){ const b = el("text",{class:"badge", x:n.x+n.w-18, y:n.y, "dominant-baseline":"central"}, g); b.textContent = "+"+n.children.length; }
+    const tt = el("title",{},g); tt.textContent = n.label;
+  };
+  draw(data.root);
+  $("vp").classList.toggle("dim", hitIds.size>0);
+  applyView();
+}
+function bbox(){ const ns = allNodes().filter(n=>n.x!==undefined && visible(n)); let a=Infinity,b=Infinity,c=-Infinity,d=-Infinity; ns.forEach(n=>{a=Math.min(a,n.x);b=Math.min(b,n.y-n.hh/2);c=Math.max(c,n.x+n.w);d=Math.max(d,n.y+n.hh/2);}); return {x:a,y:b,w:c-a,h:d-b}; }
+function visible(n){ const p = pathTo(n.id); return p.slice(0,-1).every(q=>!q.collapsed); }
+function fit(){
+  if(!data) return;
+  const svg=$("map"), W=svg.clientWidth, H=svg.clientHeight, bb=bbox();
+  const padTop = 70, pad=24;
+  const k = Math.min((W-pad*2)/bb.w, (H-padTop-pad)/bb.h, 1.25);
+  view.k = Math.max(0.2,k);
+  view.x = W/2 - (bb.x+bb.w/2)*view.k;
+  view.y = padTop + (H-padTop-pad)/2 - (bb.y+bb.h/2)*view.k;
+  applyView();
+}
+function applyView(){ $("vp").setAttribute("transform",`translate(${view.x},${view.y}) scale(${view.k})`); }
+function zoomAt(f, cx, cy){ const k2 = Math.min(3, Math.max(0.15, view.k*f)); view.x = cx - (cx-view.x)*(k2/view.k); view.y = cy - (cy-view.y)*(k2/view.k); view.k=k2; applyView(); }
+
+/* pan / zoom / select */
+(() => {
+  const svg = $("map"); let drag=null, moved=false;
+  svg.addEventListener("pointerdown", e => { drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y}; moved=false; });
+  svg.addEventListener("pointermove", e => { if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>4){ if(!moved){ moved=true; svg.classList.add("dragging"); try{svg.setPointerCapture(e.pointerId);}catch{} } view.x=drag.vx+dx; view.y=drag.vy+dy; applyView(); } });
+  const end = e => { if(drag && !moved){ const g = e.target.closest && e.target.closest(".node"); if(g) select(g.getAttribute("data-id")); } drag=null; svg.classList.remove("dragging"); };
+  svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", ()=>{drag=null;svg.classList.remove("dragging");});
+  svg.addEventListener("wheel", e => { e.preventDefault(); const r=svg.getBoundingClientRect(); zoomAt(e.deltaY<0?1.12:1/1.12, e.clientX-r.left, e.clientY-r.top); }, {passive:false});
+  svg.addEventListener("keydown", e => { const g=e.target.closest&&e.target.closest(".node"); if(g && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); select(g.getAttribute("data-id")); } });
+  $("zin").onclick = () => zoomAt(1.2, svg.clientWidth/2, svg.clientHeight/2);
+  $("zout").onclick = () => zoomAt(1/1.2, svg.clientWidth/2, svg.clientHeight/2);
+  $("fit").onclick = fit;
+  window.addEventListener("resize", () => { clearTimeout(window.__rt); window.__rt=setTimeout(fit,150); });
+})();
+
+/* ---------- glossary linking ---------- */
+function termMatches(g, n){
+  const hay = (n.label+" "+n.desc).toLowerCase();
+  const keys = [g.term.toLowerCase()]; if(g.abbr && g.abbr.length>1) keys.push(g.abbr.toLowerCase().replace(/_$/,""));
+  return keys.some(k => { if(k.length<2) return false; let r = k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); r = /y$/.test(r) ? r.slice(0,-1)+"(y|ies)" : r+"s?"; return new RegExp("(^|[^a-z0-9])"+r+"($|[^a-z0-9])","i").test(hay); });
+}
+function termsFor(n){ return data.glossary.filter(g => termMatches(g, n)); }
+
+/* ---------- inspector ---------- */
+function select(id){
+  selId = id; const n = findNode(id); if(!n) return;
+  render(); showInspector(n);
+}
+function showInspector(n){
+  const box = $("insp"); box.hidden = false;
+  const crumbs = pathTo(n.id).map(p=>esc(p.label)).join("  ›  ");
+  const src = n.source && safeHref(n.source.url) ? `<div class="src">${guardChip(n.source.url)}<a href="${esc(n.source.url)}" target="_blank" rel="noopener">${esc(n.source.title)}</a></div>` : (n.depth>0 ? '<div class="src muted small">No direct source on this node. See the Sources tab.</div>' : "");
+  const terms = termsFor(n);
+  const termChips = terms.length ? `<div class="row"><span class="muted small">Glossary:</span>${terms.map(g=>`<button class="chip" data-term="${esc(g.term)}" type="button">${esc(g.term)}</button>`).join("")}</div>` : "";
+  const hasKids = n.children.length>0;
+  box.innerHTML = `
+    <div class="row"><div class="crumbs">${crumbs}</div><button class="close" id="ix" type="button" aria-label="Close details">×</button></div>
+    <h3><span class="swatch" style="background:${colorOf(n)}"></span>${esc(n.label)}</h3>
+    ${n.desc?`<p>${esc(n.desc)}</p>`:""}
+    ${src}
+    ${termChips}
+    <div class="row">
+      ${n.depth>0 && n.depth<5 && n.source && n.source.url ? `<button class="btn sm primary" id="deeper" type="button">Map this source page</button>`:""}
+      ${hasKids && n.depth>0 ? `<button class="btn sm" id="coll" type="button">${n.collapsed?"Show":"Hide"} ${n.children.length} sub-topics</button>`:""}
+      ${n.depth>0 ? `<button class="btn sm" id="newmap" type="button">New map from this</button>`:""}
+    </div>`;
+  $("ix").onclick = () => { box.hidden = true; selId=null; render(); };
+  const coll = $("coll"); if(coll) coll.onclick = () => { n.collapsed = !n.collapsed; render(); showInspector(n); };
+  const deeper = $("deeper"); if(deeper) deeper.onclick = () => expandNode(n);
+  const nm = $("newmap"); if(nm) nm.onclick = () => { if($("mode").value==="document") $("mode").value = status.provider==="none" ? "general" : "sap"; syncMode(); $("q").value = `${data.topic} ${n.label}`; generate(); };
+  box.querySelectorAll("[data-term]").forEach(b => b.onclick = () => { tab("g"); focusTerm(b.getAttribute("data-term")); });
+}
+
+/* ---------- glossary panel ---------- */
+function renderGlossary(){
+  const q = $("gq").value.trim().toLowerCase();
+  const cats = [...new Set(data.glossary.map(g=>g.category))].sort();
+  $("cats").innerHTML = cats.length>1 ? cats.map(c=>`<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${catFilter===c}">${esc(c)}</button>`).join("") : "";
+  $("cats").querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { catFilter = catFilter===b.dataset.cat ? null : b.dataset.cat; renderGlossary(); });
+  const list = data.glossary.filter(g => (!catFilter || g.category===catFilter) && (!q || (g.term+" "+g.abbr+" "+g.definition).toLowerCase().includes(q)))
+    .sort((a,b)=>a.term.localeCompare(b.term));
+  $("gn").textContent = data.glossary.length;
+  if(!list.length){ $("glist").innerHTML = '<div class="empty">No terms match.</div>'; return; }
+  let html="", last="";
+  list.forEach(g => {
+    const L = g.term[0].toUpperCase(); if(L!==last){ html += `<div class="letter">${esc(/[A-Z]/.test(L)?L:"#")}</div>`; last=L; }
+    const count = allNodes().filter(n=>n.depth>0 && termMatches(g,n)).length;
+    const link = (g.url && safeHref(g.url) ? `${guardChip(g.url)}<a href="${esc(g.url)}" target="_blank" rel="noopener">Source</a>` : "") + (!g.definition ? `<button class="look" type="button" data-look="${esc(g.term)}">Look up definition</button>` : "");
+    html += `<div class="term${activeTerm===g.term?" on":""}" data-t="${esc(g.term)}" tabindex="0" role="button" aria-pressed="${activeTerm===g.term}">
+      <div class="t"><b>${esc(g.term)}</b>${g.abbr?`<span class="abbr">${esc(g.abbr)}</span>`:""}<span class="cat">${esc(g.category)}</span></div>
+      <div class="d">${esc(g.definition)}</div>
+      <div class="links"><span class="muted">${count ? `Appears in ${count} node${count>1?"s":""}` : "Not on the map"}</span>${link}</div></div>`;
+  });
+  $("glist").innerHTML = html;
+  $("glist").querySelectorAll("[data-look]").forEach(b => b.onclick = e => { e.stopPropagation(); const g = data.glossary.find(x=>x.term===b.dataset.look); if(g) defineTerm(g); });
+  $("glist").querySelectorAll(".term").forEach(t => {
+    const go = e => { if(e.target.closest("a,button")) return; focusTerm(t.dataset.t); };
+    t.onclick = go; t.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(e);} };
+  });
+}
+function focusTerm(term){
+  if(activeTerm===term){ clearHits(); return; }
+  activeTerm = term; const g = data.glossary.find(x=>x.term===term);
+  hitIds = new Set(allNodes().filter(n=>n.depth>0 && termMatches(g,n)).map(n=>n.id));
+  // reveal collapsed parents of hits
+  hitIds.forEach(id => pathTo(id).slice(0,-1).forEach(p=>p.collapsed=false));
+  $("gclear").hidden = false; render(); renderGlossary();
+  const el2 = $("glist").querySelector(`[data-t="${CSS.escape(term)}"]`); if(el2) el2.scrollIntoView({block:"nearest"});
+  if(!hitIds.size) toast("This term is not on the map yet");
+}
+function clearHits(){ activeTerm=null; hitIds=new Set(); $("gclear").hidden=true; render(); renderGlossary(); }
+$("gclear").onclick = clearHits;
+$("gq").addEventListener("input", renderGlossary);
+
+/* ---------- sources panel ---------- */
+function renderSources(){
+  $("sn").textContent = data.sources.length;
+  if(!data.sources.length){ $("slist").innerHTML='<div class="empty">No sources returned.</div>'; return; }
+  const groups = {}; data.sources.forEach(s => (groups[s.type] ||= []).push(s));
+  $("slist").innerHTML = Object.keys(SRC_TYPES).filter(t=>groups[t]).map(t => `<div class="srctype">${SRC_TYPES[t]}</div>` + groups[t].map(s => {
+    const h = safeHref(s.url);
+    return `<div class="srcitem"><div class="row">${guardChip(s.url)}${h?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`:`<b>${esc(s.title)}</b>`}</div><span class="dom">${esc(hostOf(s.url)||s.url)}</span>${s.why?`<span class="small muted">${esc(s.why)}</span>`:""}</div>`;
+  }).join("")).join("");
+}
+function tab(which){
+  $("tab-g").setAttribute("aria-selected", which==="g"); $("tab-s").setAttribute("aria-selected", which==="s");
+  $("pane-g").hidden = which!=="g"; $("pane-s").hidden = which!=="s";
+}
+$("tab-g").onclick = () => tab("g"); $("tab-s").onclick = () => tab("s");
+
+/* ---------- load a map ---------- */
+function load(d, label){
+  data = norm(d); selId=null; hitIds=new Set(); activeTerm=null; catFilter=null; $("gq").value="";
+  $("insp").hidden = true; $("gclear").hidden = true;
+  $("eyebrow").textContent = label || "Mind map";
+  $("summary").textContent = data.summary;
+  render(); renderGlossary(); renderSources();
+  requestAnimationFrame(fit);
+}
+
+/* ---------- history (per viewer, best effort) ---------- */
+const HKEY = "solution-atlas-history-v1";
+function getHist(){ try{ return JSON.parse(localStorage.getItem(HKEY)||"[]"); }catch{ return []; } }
+function saveHist(d){ try{ const h = getHist().filter(x=>x.topic.toLowerCase()!==String(d.topic).toLowerCase()); h.unshift({topic:d.topic, d}); localStorage.setItem(HKEY, JSON.stringify(h.slice(0,8))); }catch{} renderRecent(); }
+function renderRecent(){
+  const h = getHist();
+  const items = [{topic:EXAMPLE.topic, d:EXAMPLE, ex:true}, ...h.filter(x=>x.topic!==EXAMPLE.topic)];
+  $("recent").innerHTML = '<span>Open:</span>' + items.map((x,i)=>`<button class="chip" type="button" data-i="${i}">${esc(x.topic)}${x.ex?" · example":""}</button>`).join("");
+  $("recent").querySelectorAll("[data-i]").forEach(b => b.onclick = () => { const x = items[+b.dataset.i]; load(x.d, x.ex ? "Example map" : "Saved in this browser"); });
+}
+
+/* ---------- API calls (your own server; no AI) ---------- */
+let status = {provider:"none"};
+function busy(on, msg){
+  $("go").disabled = on; $("stop").hidden = !on;
+  const d = $("deeper"); if(d) d.disabled = on;
+  $("status").className = "status"; $("status").innerHTML = on ? `<span class="dot"></span>${esc(msg)}` : "";
+}
+function fail(msg){ busy(false); $("status").className = "status err"; $("status").textContent = msg; }
+async function api(path, opts={}){
+  const r = await fetch(path, {...opts, signal: ctl.signal});
+  let j = null; try{ j = await r.json(); }catch{}
+  if(!r.ok || !j || j.error) throw new Error((j && j.error) || `The server answered ${r.status}.`);
+  return j;
+}
+function metaLine(m){
+  if(!m) return "";
+  const bits = [];
+  if(m.mode==="sap") bits.push(`${m.results} results from SAP Help Portal${/\+/.test(m.provider)?" and other SAP sites":""}`, `${m.pagesRead} pages read`);
+  if(m.mode==="general") bits.push("Built from Wikipedia");
+  if(m.mode==="document") bits.push("Built from the document's own structure");
+  bits.push(m.cached ? "from cache" : `${(m.tookMs/1000).toFixed(1)} s`);
+  if(m.warnings && m.warnings.length) bits.push(`${m.warnings.length} page${m.warnings.length>1?"s":""} skipped`);
+  return bits.join(" · ");
+}
+async function generate(){
+  const mode = $("mode").value, q = $("q").value.trim();
+  if(!q){ $("q").focus(); return; }
+  ctl = new AbortController();
+  try{
+    let d;
+    if(mode==="document"){
+      busy(true, "Reading the document and its outline…");
+      d = await api("/api/document", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({url:q})});
+    } else {
+      busy(true, mode==="sap" ? `Searching SAP Help Portal for "${q}" and reading the top pages… (10–30 seconds)` : `Reading the Wikipedia article for "${q}"…`);
+      const site = $("site").value.trim();
+      d = await api(`/api/map?mode=${mode}&q=${encodeURIComponent(q)}${site&&mode==="general"?`&site=${encodeURIComponent(site)}`:""}`);
+    }
+    busy(false); load(d, mode==="document" ? "Mapped from a document" : mode==="sap" ? "Official SAP sources" : "Wikipedia");
+    saveHist(d); $("status").textContent = metaLine(d.meta);
+  }catch(e){ if(e.name==="AbortError"){ busy(false); $("status").textContent="Stopped."; } else fail(e.message); }
+}
+// "Go deeper" without AI: read the node's own source page and graft its outline under the node.
+async function expandNode(n){
+  if(!n.source || !n.source.url) return;
+  ctl = new AbortController();
+  busy(true, `Reading "${n.source.title}"…`);
+  try{
+    const d = await api("/api/document", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({url:n.source.url})});
+    const seen = new Set(n.children.map(c=>c.label.toLowerCase()));
+    const add = (src, parent, depth) => src.slice(0,8).forEach(b => {
+      if(depth===n.depth+1 && seen.has(String(b.label).toLowerCase())) return;
+      const node = {id:"n"+(uid++), label:String(b.label), desc:String(b.desc||""), depth, branch:n.branch, children:[], collapsed:false,
+        source: b.source && b.source.url ? {title:String(b.source.title), url:String(b.source.url)} : null};
+      parent.children.push(node);
+      if(depth < 5 && b.children) add(b.children, node, depth+1);
+    });
+    add(d.branches||[], n, n.depth+1);
+    n.collapsed = false;
+    const have = new Set(data.glossary.map(g=>g.term.toLowerCase()));
+    (d.glossary||[]).filter(g=>!have.has(g.term.toLowerCase())).forEach(g => data.glossary.push({term:g.term,abbr:g.abbr||"",definition:g.definition||"",category:g.category||"General",url:g.url||""}));
+    busy(false); $("status").textContent = `Added the outline of "${n.source.title}" under "${n.label}".`;
+    render(); renderGlossary(); showInspector(n); persistCurrent();
+  }catch(e){ if(e.name==="AbortError"){ busy(false); $("status").textContent="Stopped."; } else fail(e.message); }
+}
+async function defineTerm(g){
+  ctl = new AbortController();
+  try{ const d = await api(`/api/define?term=${encodeURIComponent(g.term)}`); if(d.extract){ g.definition = d.extract; g.url = g.url || d.url || ""; renderGlossary(); } else toast("No definition found"); }
+  catch(e){ toast("No definition found on Wikipedia"); }
+}
+function toRaw(n){ return {label:n.label, desc:n.desc, source:n.source, children:n.children.map(toRaw)}; }
+function persistCurrent(){ if(!data || data.topic===EXAMPLE.topic) return; saveHist({topic:data.topic, summary:data.summary, branches:data.root.children.map(toRaw), glossary:data.glossary, sources:data.sources}); }
+$("ask").addEventListener("submit", e => { e.preventDefault(); generate(); });
+$("stop").onclick = () => ctl && ctl.abort();
+async function uploadDoc(file){
+  if(!file) return;
+  ctl = new AbortController();
+  const src = /^https?:\/\//i.test($("q").value.trim()) ? $("q").value.trim() : "";
+  busy(true, `Reading "${file.name}" and its outline…`);
+  try{
+    const d = await api(`/api/upload?name=${encodeURIComponent(file.name)}&source=${encodeURIComponent(src)}`, {method:"POST", headers:{"content-type": file.type || "application/pdf"}, body:file});
+    busy(false); load(d, "Mapped from your uploaded file"); saveHist(d); $("status").textContent = metaLine(d.meta);
+  }catch(e){ if(e.name==="AbortError"){ busy(false); $("status").textContent="Stopped."; } else fail(e.message); }
+  $("upfile").value = "";
+}
+$("upfile").addEventListener("change", e => uploadDoc(e.target.files[0]));
+function syncMode(){
+  const m = $("mode").value;
+  $("upwrap").hidden = m!=="document";
+  $("q").placeholder = m==="document" ? "Paste a guide URL, or click Upload PDF" : m==="sap" ? "Keyword or application, e.g. SAP Ariba Sourcing" : "Any keyword or product, e.g. Salesforce";
+  $("sitewrap").hidden = m!=="general";
+  if(false){ $("status").className="status err"; $("status").textContent="SAP search needs a search key on the server (see README). General and Document modes work without one."; }
+  else if($("status").classList.contains("err")){ $("status").className="status"; $("status").textContent=""; }
+}
+$("mode").addEventListener("change", syncMode);
+
+/* ---------- export ---------- */
+function exportSVG(){
+  const bb = bbox(), pad = 30, cs = getComputedStyle(document.documentElement);
+  const clone = $("vp").cloneNode(true); clone.setAttribute("transform", `translate(${pad-bb.x},${pad-bb.y})`); clone.classList.remove("dim");
+  let s = new XMLSerializer().serializeToString(clone);
+  s = s.replace(/var\(--([a-z0-9-]+)\)/g, (_,v) => cs.getPropertyValue("--"+v).trim() || "#888");
+  s = s.replace(/color-mix\(in srgb, ([^ ]+) 16%, ([^)]+)\)/g, (_,a) => a);
+  const w = Math.ceil(bb.w+pad*2), h = Math.ceil(bb.h+pad*2);
+  return `<svg xmlns="${SVGNS}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style>text{font-family:"IBM Plex Sans",Arial,sans-serif;font-size:13px;dominant-baseline:central}.root text{font-size:17px;font-weight:700;fill:#fff}.edge{fill:none;stroke-width:2}rect{fill-opacity:.9}.node rect{fill:#fff}.root rect{fill:${cs.getPropertyValue("--accent").trim()}}</style><rect width="100%" height="100%" fill="#ffffff"/>${s}</svg>`;
+}
+function exportCSV(){
+  const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  return ["Term,Abbreviation,Category,Definition,Source"].concat(data.glossary.map(g=>[g.term,g.abbr,g.category,g.definition,g.url].map(q).join(","))).join("\n");
+}
+function exportMD(){
+  const lines = [`# ${data.topic}`, "", data.summary, ""];
+  const walk = (n, lvl) => { lines.push(`${"  ".repeat(lvl)}- **${n.label}**${n.desc?` — ${n.desc}`:""}${n.source?` ([source](${n.source.url}))`:""}`); n.children.forEach(c=>walk(c,lvl+1)); };
+  data.root.children.forEach(b=>walk(b,0));
+  lines.push("", "## Glossary", ""); [...data.glossary].sort((a,b)=>a.term.localeCompare(b.term)).forEach(g=>lines.push(`- **${g.term}**${g.abbr?` (${g.abbr})`:""}: ${g.definition}`));
+  lines.push("", "## Sources", ""); data.sources.forEach(s=>lines.push(`- [${s.title}](${s.url})${isOfficial(s.url)?"":" (unverified domain)"}`));
+  return lines.join("\n");
+}
+let expMenu = null;
+$("exp").onclick = (ev) => {
+  if(expMenu){ expMenu.remove(); expMenu=null; return; }
+  expMenu = document.createElement("div");
+  expMenu.style.cssText = "position:absolute;right:14px;top:52px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.15)";
+  const slug = (data.topic||"map").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  [["Mind map image (.svg)",()=>({filename:slug+"-mindmap.svg",data:new Blob([exportSVG()],{type:"image/svg+xml"})})],
+   ["Glossary (.csv)",()=>({filename:slug+"-glossary.csv",data:new Blob([exportCSV()],{type:"text/csv"})})],
+   ["Study notes (.md)",()=>({filename:slug+"-notes.md",data:new Blob([exportMD()],{type:"text/markdown"})})]
+  ].forEach(([lbl,fn]) => { const b=document.createElement("button"); b.className="btn sm"; b.type="button"; b.textContent=lbl; b.style.justifyContent="flex-start";
+    b.onclick = async () => { expMenu.remove(); expMenu=null; const f = fn(); const a = document.createElement("a"); a.href = URL.createObjectURL(f.data); a.download = f.filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000); };
+    expMenu.appendChild(b); });
+  $("exp").closest(".stage").appendChild(expMenu);
+};
+
+function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(t._t); t._t=setTimeout(()=>t.hidden=true,2600); }
+
+/* ---------- boot ---------- */
+renderRecent();
+load(EXAMPLE, "Example map");
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(data){ render(); fit(); } });
+fetch("/api/status").then(r=>r.json()).then(j=>{ status=j; if(Array.isArray(j.officialDomains)) OFFICIAL=j.officialDomains; syncMode(); }).catch(()=>{ $("status").textContent="Can't reach the Solution Atlas server. Start it with npm start."; });
+})();
+</script>
+</body>
+</html>
