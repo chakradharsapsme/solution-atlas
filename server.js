@@ -39,6 +39,17 @@ function tocBranch(guide) {
   return { label: ("Guide: " + guide.guideTitle).slice(0, 52), desc: guide.guideDesc || "Chapters of the main SAP guide for this topic.", source: { title: guide.guideTitle, url: guide.guideUrl }, children: items.slice(0, 12).map(n => conv(n, 2)) };
 }
 
+function exploreBranch(q) {
+  const e = encodeURIComponent(q), p = e.replace(/%20/g, "+");
+  const leaf = (label, desc, url) => ({ label, desc, source: { title: label, url }, children: [] });
+  return { label: "Community, videos & learning", desc: `Open live results for "${q}" on official SAP community, video and learning sites.`, source: { title: "SAP Community", url: `https://community.sap.com/t5/forums/searchpage/tab/message?q=${e}` }, children: [
+    leaf("SAP Community Q&A and blogs", "Questions, accepted answers and expert blogs from practitioners.", `https://community.sap.com/t5/forums/searchpage/tab/message?q=${e}`),
+    leaf("SAP Learning videos & courses", "Free official videos, learning journeys and courses.", `https://learning.sap.com/search?query=${p}`),
+    leaf("SAP on YouTube", "Official SAP channel videos.", `https://www.youtube.com/@SAP/search?query=${e}`),
+    leaf("SAP Help and Learning on YouTube", "Official how-to and walkthrough videos.", `https://www.youtube.com/@SAPHelpandLearning/search?query=${e}`),
+  ] };
+}
+
 async function sapMap(q) {
   const provider = activeProvider();
   const warnings = [];
@@ -88,6 +99,7 @@ async function sapMap(q) {
     if (guide.guideDesc) map.summary = guide.guideDesc;
     map.sources.unshift({ title: guide.guideTitle + " (SAP Help Portal)", url: guide.guideUrl, type: "official", why: "Main SAP guide for this topic.", official: true });
   }
+  map.branches.push(exploreBranch(q));
   const glossary = harvest([...docs.values(), ...results.map(r => ({ url: r.url, snippet: r.title + ". " + r.snippet }))], { query: q, limit: 40 });
   return { ...map, glossary, meta: { mode: "sap", provider: provider === "none" ? "sap-help" : "sap-help+" + provider, results: results.length, pagesRead: docs.size, warnings } };
 }
