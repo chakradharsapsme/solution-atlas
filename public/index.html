@@ -149,6 +149,9 @@ svg#map.dragging{cursor:grabbing}
 .xlink:hover{border-color:var(--accent);background:var(--ground)}
 .xlink > span:first-child{display:flex;flex-direction:column;gap:1px}
 a.chip{color:var(--ink);text-decoration:none}
+/* compact view when embedded in another app (Applywise) */
+body.embed .top .brand span, body.embed .recent { display:none }
+body.embed .app { padding-top: 8px }
 </style>
 </head>
 <body>
@@ -721,7 +724,16 @@ function toast(m){ const t=$("toast"); t.textContent=m; t.hidden=false; clearTim
 renderRecent();
 load(EXAMPLE, "Example map");
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(data){ render(); fit(); } });
-fetch("/api/status").then(r=>r.json()).then(j=>{ status=j; if(Array.isArray(j.officialDomains)) OFFICIAL=j.officialDomains; syncMode(); }).catch(()=>{ $("status").textContent="Can't reach the Solution Atlas server. Start it with npm start."; });
+// Deep link: ?q=keyword&mode=sap|general builds that map straight away (used by Applywise); &embed=1 gives a compact view.
+const LINK = new URLSearchParams(location.search);
+if (LINK.get("embed")) document.body.classList.add("embed");
+let linked = false;
+function deepLink(){
+  if (linked || !LINK.get("q")) return; linked = true;
+  const m = LINK.get("mode"); if (m === "sap" || m === "general") { $("mode").value = m; syncMode(); }
+  $("q").value = LINK.get("q").slice(0, 120); generate();
+}
+fetch("/api/status").then(r=>r.json()).then(j=>{ status=j; if(Array.isArray(j.officialDomains)) OFFICIAL=j.officialDomains; syncMode(); deepLink(); }).catch(()=>{ $("status").textContent="Can't reach the Solution Atlas server. Start it with npm start."; deepLink(); });
 })();
 </script>
 </body>
