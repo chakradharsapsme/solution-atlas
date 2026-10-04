@@ -18,6 +18,15 @@ app.set("trust proxy", 1); // correct visitor IPs behind a hosting provider's pr
 app.use(express.json({ limit: "20kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// ---- let Applywise (and local testing) call the API from the browser ----
+const ALLOWED_ORIGINS = [/^https:\/\/chakradharsapsme\.github\.io$/, /^https:\/\/[a-z0-9-]+\.pages\.dev$/, /^https:\/\/[a-z0-9-]+\.applywise-1bt\.pages\.dev$/, /^http:\/\/localhost(:\d+)?$/];
+app.use("/api", (req, res, next) => {
+  const o = req.get("origin");
+  if (o && ALLOWED_ORIGINS.some(r => r.test(o))) { res.set("Access-Control-Allow-Origin", o); res.set("Vary", "Origin"); res.set("Access-Control-Allow-Headers", "content-type"); res.set("Access-Control-Allow-Methods", "GET,POST"); }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 // ---- simple per-IP rate limit (protects your search credits) ----
 const hits = new Map();
 app.use("/api", (req, res, next) => {
